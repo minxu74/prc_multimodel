@@ -16,7 +16,7 @@ cmipmods=()
 for modnm in *; do
     if [[ -d $modnm ]]; then
 
-       if [[ $modnm == *E3SM* ]]; then
+       if [[ $modnm == *E3SM* || $modnm == *MeanCMIP* || $modnm == *temp* ]]; then
 
            echo $modnm
            echo "skip"
@@ -63,7 +63,7 @@ for md in "${cmipmods[@]}"; do
     landf=`ls $modeldir/$md/sftlf_*.nc`
     areaf=`ls $modeldir/$md/areacella_*.nc`
 
-    if [ -z $landf || -z $areaf ]; then
+    if [[ -z $landf || -z $areaf ]]; then
 
        echo "error"
        exit
@@ -103,7 +103,7 @@ for md in "${cmipmods[@]}"; do
            fi
 
 
-           if [[ $vr == 'rsds' ]]; then   # hardcode
+           if [[ $vr == 'rsds' ]]; then   # hardcode to get the areacella and landfrac from rsds
 
               #specially processing areacella and sftlf.
               /bin/cp $landf ./temp/
@@ -131,7 +131,8 @@ for md in "${cmipmods[@]}"; do
            if [ -e temp/Lmon_map.nc ]; then
               ncremap -m temp/Lmon_map.nc -i temp/${vr}_$md.nc -o temp/${vr}_${md}_historical_r1i1p1_.nc
            else
-              ncremap -P sgs -a conserve -i temp/${vr}_$md.nc -g ../180x360_SCRIP.20150901.nc -m temp/Lmon_map.nc -o temp/${vr}_${md}_historical_r1i1p1_.nc
+              ncremap -P sgs -a conserve -i temp/${vr}_$md.nc -g ../180x360_SCRIP.20150901.nc -m temp/Lmon_map.nc 
+                      -o temp/${vr}_${md}_historical_r1i1p1_.nc
            fi
         fi
 
@@ -154,5 +155,8 @@ for vr in "${!cmipvars[@]}"; do
     files=($mfile)
     echo $vr --- ${#files[@]}
     echo $mfile
-
 done
+
+cd MeanCMIP_conv
+source vinterp.sh
+

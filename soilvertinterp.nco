@@ -1,0 +1,64 @@
+//Min Xu @ORNL
+
+//following CESM depth
+
+defdim("xdepth", 15);
+xdepth_bnds[$xdepth, $bnds]=
+   { 0.d, 0.0175128169357777, 
+     0.0175128169357777, 0.0450917892158031, 
+     0.0450917892158031, 0.0905618369579315, 
+     0.0905618369579315, 0.1655292510986330, 
+     0.1655292510986330, 0.2891296148300170, 
+     0.2891296148300170, 0.4929121434688570, 
+     0.4929121434688570, 0.8288927674293520, 
+     0.8288927674293520, 1.3828310966491700, 
+     1.3828310966491700, 2.2961211204528800, 
+     2.2961211204528800, 3.8018822669982900, 
+     3.8018822669982900, 6.2844614982605000, 
+     6.2844614982605000, 10.377542495727500, 
+     10.377542495727500, 17.125894546508800, 
+     17.125894546508800, 28.252044677734400, 
+     28.252044677734400, 43.740566253662100 };
+
+
+xtsl[$time, $xdepth, $lat, $lon]=tsl@_FillValue;
+
+*sk=$xdepth.size;
+*sj=$depth.size;
+
+for(*k=0;k<sk;k++){
+   *z0=xdepth_bnds(k,0);  
+   *z1=xdepth_bnds(k,1);  
+   for(*j=0;j<sj;j++){
+      if(depth_bnds(j,0) <= z0 && depth_bnds(j,1) < z1 && depth_bnds(j,1) >= z0)
+
+         if (j == sj-1)
+           xtsl(:,k,:,:) = tsl(:,j,:,:);
+         else
+           xtsl(:,k,:,:) = (depth_bnds(j,1)-z0) * tsl(:,j,:,:) / (z1-z0);
+      else if (depth_bnds(j,0) <= z0 && depth_bnds(j,1) >= z1)
+         xtsl(:,k,:,:) = tsl(:,j,:,:);
+      else if (depth_bnds(j,1) <= z0)
+          if (j == sj-1)
+            xtsl(:,k,:,:) = tsl(:,j,:,:);
+          else
+            continue;
+      else if (depth_bnds(j,0) >= z1)
+          continue;
+      else if (depth_bnds(j,0) >  z0 && depth_bnds(j,1) <= z1)
+         if (j == sj-1)
+             xtsl(:,k,:,:) = xtsl(:,k,:,:) + (z1-depth_bnds(j,0))*tsl(:,j,:,:)/(z1-z0);
+         else
+             xtsl(:,k,:,:) = xtsl(:,k,:,:) + (depth_bnds(j,1)-depth_bnds(j,0))*tsl(:,j,:,:)/(z1-z0);
+      else if (depth_bnds(j,0) >  z0 && depth_bnds(j,1) >  z1)
+          xtsl(:,k,:,:) = xtsl(:,k,:,:) + (z1-depth_bnds(j,0))*tsl(:,j,:,:)/(z1-z0);
+      else
+          print ("error");
+   }
+}
+
+xtsl@_FillValue=tsl@_FillValue;
+xtsl@standard_name=tsl@standard_name;
+xtsl@long_name=tsl@long_name;
+xtsl@units=tsl@units;
+
